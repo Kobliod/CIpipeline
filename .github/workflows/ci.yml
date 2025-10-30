@@ -1,4 +1,5 @@
-name: Deploy To Main
+name: Deploy to main
+
 on:
   push:
     branches:
@@ -9,11 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the source code
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
-      # 2. Deploy to Server
       - name: Deploy to Server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -23,17 +22,17 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
 
-          # Stop existing process if running
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $USERNAME@$HOST << 'EOF'
+          # Connect to server and prepare app folder
+          ssh -i private_key.pem -o StrictHostKeyChecking=no $USERNAME@$HOST << EOF
             mkdir -p /home/$USERNAME/app
             pkill -f "python3 madlibs.py" || true
           EOF
 
-          # Copy all project files to the server
+          # Copy project files
           scp -i private_key.pem -o StrictHostKeyChecking=no -r ./* $USERNAME@$HOST:/home/$USERNAME/app
 
-          # Install dependencies and restart the app
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $USERNAME@$HOST << 'EOF'
+          # Install dependencies and restart app
+          ssh -i private_key.pem -o StrictHostKeyChecking=no $USERNAME@$HOST << EOF
             cd /home/$USERNAME/app
             python3 -m pip install flask
             nohup python3 madlibs.py >> app.log 2>&1 &
