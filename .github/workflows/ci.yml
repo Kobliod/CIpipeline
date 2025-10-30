@@ -1,5 +1,4 @@
 name: Deploy To Main
-
 on:
   push:
     branches:
